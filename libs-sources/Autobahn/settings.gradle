@@ -1,0 +1,6 @@
+include ':Autobahn'
+include ':Demo:SimplePubSub'
+include ':Demo:BroadcastClient'
+include ':Demo:TestSuiteClient'
+include ':Demo:EchoClient'
+include ':Demo:SimpleRpc'

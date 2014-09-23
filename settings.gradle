@@ -1,1 +1,4 @@
 include ':app'
+include ':Autobahn'
+
+project(':Autobahn').projectDir = new File(settingsDir, '/libs-sources/Autobahn/Autobahn')
