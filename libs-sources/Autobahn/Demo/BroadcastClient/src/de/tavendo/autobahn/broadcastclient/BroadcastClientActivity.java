@@ -36,6 +36,7 @@ import de.tavendo.autobahn.WebSocket;
 import de.tavendo.autobahn.WebSocketConnection;
 import de.tavendo.autobahn.WebSocketException;
 import de.tavendo.autobahn.WebSocketConnectionHandler;
+import de.tavendo.autobahn.WebSocketOptions;
 
 public class BroadcastClientActivity extends Activity {
 
@@ -101,13 +102,15 @@ public class BroadcastClientActivity extends Activity {
 
   private void start() {
 
-     final String wsuri = "ws://" + mHostname.getText() + ":" + mPort.getText();
+     final String wsuri = "ws://" + mHostname.getText()/* + ":" + mPort.getText()*/ + "?username=a,password=1";
 
      mStatusline.setText("Status: Connecting to " + wsuri + " ..");
 
      setButtonDisconnect();
 
      try {
+        WebSocketOptions webSocketOptions = new WebSocketOptions();
+        webSocketOptions.setSocketConnectTimeout(30 * 1000);
         mConnection.connect(wsuri, new WebSocketConnectionHandler() {
            @Override
            public void onOpen() {
@@ -130,14 +133,14 @@ public class BroadcastClientActivity extends Activity {
            }
 
            @Override
-           public void onClose(int code, String reason) {
+           public void onClose(int code, Bundle data) {
               alert("Connection lost.");
               mStatusline.setText("Status: Ready.");
               setButtonConnect();
               mSendMessage.setEnabled(false);
               mMessage.setEnabled(false);
            }
-        });
+        }, webSocketOptions);
      } catch (WebSocketException e) {
 
         Log.d(TAG, e.toString());
