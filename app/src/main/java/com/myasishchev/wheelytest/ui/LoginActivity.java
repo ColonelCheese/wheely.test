@@ -1,19 +1,31 @@
-package com.myasishchev.wheelytest;
+package com.myasishchev.wheelytest.ui;
 
-import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 
+import com.myasishchev.wheelytest.R;
 
-public class LoginActivity extends Activity {
+public class LoginActivity extends FragmentActivity {
+
+    private View.OnClickListener connectClick = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            startActivity(new Intent(LoginActivity.this, MapActivity.class));
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+        Button btnConnect = (Button) findViewById(R.id.connect);
+        btnConnect.setOnClickListener(connectClick);
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
