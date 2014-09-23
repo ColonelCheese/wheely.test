@@ -4,5 +4,9 @@
     <string name="app_name">Wheely.Test</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="login">Login</string>
+    <string name="connect">Connect</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
 
 </resources>
