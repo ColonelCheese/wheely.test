@@ -1,6 +1,7 @@
 package com.myasishchev.wheelytest.model;
 
 import android.app.Activity;
+import android.app.Application;
 import android.content.Context;
 import android.location.Criteria;
 import android.location.Location;
@@ -47,8 +48,8 @@ public class WLocationManager implements android.location.LocationListener {
         return WApplication.get(context).locationManager();
     }
 
-    public WLocationManager(Context context) {
-        locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+    public WLocationManager(Application application) {
+        locationManager = (LocationManager) application.getSystemService(Context.LOCATION_SERVICE);
     }
 
     public Location getLocation() {
@@ -60,6 +61,7 @@ public class WLocationManager implements android.location.LocationListener {
     }
 
     public void addLocationListener(ILocationListener listener) {
+        listener.onLocationChanged(location);
         listeners.add(listener);
     }
 
