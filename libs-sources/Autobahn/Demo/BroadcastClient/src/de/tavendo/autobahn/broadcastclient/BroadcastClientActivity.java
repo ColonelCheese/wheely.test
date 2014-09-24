@@ -102,16 +102,15 @@ public class BroadcastClientActivity extends Activity {
 
   private void start() {
 
-     final String wsuri = "ws://" + mHostname.getText()/* + ":" + mPort.getText()*/ + "?username=a,password=1";
+     final String wsuri = "ws://" + mHostname.getText() + ":" + mPort.getText();
 
      mStatusline.setText("Status: Connecting to " + wsuri + " ..");
 
      setButtonDisconnect();
 
      try {
-        WebSocketOptions webSocketOptions = new WebSocketOptions();
-        webSocketOptions.setSocketConnectTimeout(30 * 1000);
         mConnection.connect(wsuri, new WebSocketConnectionHandler() {
+
            @Override
            public void onOpen() {
               mStatusline.setText("Status: Connected to " + wsuri);
@@ -140,9 +139,9 @@ public class BroadcastClientActivity extends Activity {
               mSendMessage.setEnabled(false);
               mMessage.setEnabled(false);
            }
-        }, webSocketOptions);
-     } catch (WebSocketException e) {
 
+        });
+     } catch (WebSocketException e) {
         Log.d(TAG, e.toString());
      }
   }
