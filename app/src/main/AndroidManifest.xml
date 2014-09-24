@@ -20,6 +20,7 @@
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/WheelyTheme" >
+
         <activity
             android:name=".ui.LoginActivity"
             android:label="@string/title_activity_login" >
