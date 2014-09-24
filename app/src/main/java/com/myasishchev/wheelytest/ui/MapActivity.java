@@ -1,15 +1,18 @@
 package com.myasishchev.wheelytest.ui;
 
-import android.support.v4.app.FragmentActivity;
+import android.location.Location;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.myasishchev.wheelytest.R;
+import com.myasishchev.wheelytest.model.WLocationManager;
+import com.myasishchev.wheelytest.model.WSocketManager;
 
-public class MapActivity extends FragmentActivity {
+public class MapActivity extends ActionBarActivity implements WLocationManager.ILocationListener {
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
 
@@ -18,12 +21,28 @@ public class MapActivity extends FragmentActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
         setUpMapIfNeeded();
+        WLocationManager.get(this).startUpdateLocation();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         setUpMapIfNeeded();
+        WLocationManager.get(this).addLocationListener(this);
+        //WSocketManager.get(this).addPointsUpdateListener(this);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        WLocationManager.get(this).delLocationListener(this);
+        //WSocketManager.get(this).delPointsUpdateListener(this);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        WLocationManager.get(this).stopUpdateLocation();
     }
 
     /**
@@ -62,5 +81,12 @@ public class MapActivity extends FragmentActivity {
      */
     private void setUpMap() {
         mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Marker"));
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        if (location != null) {
+            WSocketManager.get(this).sendLocation(location);
+        }
     }
 }
