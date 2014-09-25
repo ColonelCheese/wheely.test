@@ -4,10 +4,12 @@ import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONObject;
 
+import java.io.Serializable;
+
 /**
  * Created by MyasishchevA on 25.09.2014.
  */
-public class WMarker {
+public class WMarker implements Serializable {
 
     private static final java.lang.String TAG_ID = "id";
     private static final java.lang.String TAG_LATITUDE = "lat";
@@ -34,4 +36,10 @@ public class WMarker {
     public LatLng getPosition() {
         return position;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        return o instanceof WMarker && ((WMarker) o).getId() == getId();
+    }
+
 }

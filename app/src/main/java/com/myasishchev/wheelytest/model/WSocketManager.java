@@ -11,6 +11,8 @@ import android.util.Log;
 
 import com.myasishchev.wheelytest.WApplication;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,40 +25,13 @@ import de.tavendo.autobahn.WebSocketOptions;
 
 public class WSocketManager {
 
-    private static final String TAG = WSocketManager.class.getSimpleName();
+    private static final String LOG_TAG = WSocketManager.class.getSimpleName();
 
     private static final String HOST = "mini-mdt.wheely.com";
 
     private static final int CONNECTION_TIMEOUT = 30 * 1000;
     private static final int RECEIVE_TIMEOUT = 30 * 1000;
     private static final int RECONNECT_INTERVAL = 30 * 1000;
-
-    private AlertDialog alertDialog;
-
-    public void handleConnectionClose(int code, Bundle data, Activity activity) {
-        if (data != null && activity != null) {
-            String statusMessage = data.getString(WebSocketConnection.EXTRA_STATUS_MESSAGE);
-            int statusCode = data.getInt(WebSocketConnection.EXTRA_STATUS_CODE);
-            if (alertDialog != null) alertDialog.dismiss();
-            alertDialog = new AlertDialog.Builder(activity)
-                    .setMessage(String.format("Status code:%s \nStatus message:%s", statusCode, statusMessage))
-                    .setCancelable(false)
-                    .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            dialog.cancel();
-                        }
-                    }).create();
-            alertDialog.show();
-        }
-    }
-
-    public void addMessagesListener(IMessagesListener listener) {
-        if (listener != null) mListeners.add(listener);
-    }
-
-    public boolean delMessagesListener(IMessagesListener listener) {
-        return listener != null && mListeners.remove(listener);
-    }
 
     public interface IConnectionListener {
         public void onConnectionOpen();
@@ -70,15 +45,29 @@ public class WSocketManager {
     private List<IConnectionListener> cListeners = new ArrayList<IConnectionListener>();
     private List<IMessagesListener> mListeners = new ArrayList<IMessagesListener>();
 
-    public void addConnectionListener(IConnectionListener listener) {
-        if (listener != null) cListeners.add(listener);
-    }
-
-    public boolean delConnectionListener(IConnectionListener listener) {
-        return listener != null && cListeners.remove(listener);
-    }
-
+    private String wsuri = "";
     private WebSocket webSocket = new WebSocketConnection();
+    private WebSocketConnectionHandler connectionHandler = new WebSocketConnectionHandler() {
+
+        @Override
+        public void onOpen() {
+            Log.d(LOG_TAG, "Status: Connected to " + wsuri);
+            notifyCListenersOnOpen();
+        }
+
+        @Override
+        public void onTextMessage(String payload) {
+            Log.e(LOG_TAG, "Message received:\n" + payload);
+            notifyMListenersOnTextMessage(payload);
+        }
+
+        @Override
+        public void onClose(int code, Bundle data) {
+            Log.i(LOG_TAG, "Connection lost.");
+            notifyCListenersOnClose(code, data);
+        }
+
+    };
 
     public WSocketManager(Application application) {
 
@@ -93,31 +82,17 @@ public class WSocketManager {
     }
 
     public void connect(String username, String password) {
-        final String wsuri = "ws://" + HOST + File.separator + String.format("?username=%s&password=%s", username, password);
-        Log.d(TAG, "Status: Connecting to " + wsuri + "...");
+        wsuri = "ws://" + HOST + File.separator + String.format("?username=%s&password=%s", username, password);
+        reconnect();
+    }
+
+    public void reconnect() {
         try {
-            webSocket.connect(wsuri, new WebSocketConnectionHandler() {
-                @Override
-                public void onOpen() {
-                    Log.d(TAG, "Status: Connected to " + wsuri);
-                    notifyCListenersOnOpen();
-                }
-
-                @Override
-                public void onTextMessage(String payload) {
-                    Log.e(TAG, "Message received:\n" + payload);
-                    notifyMListenersOnTextMessage(payload);
-                }
-
-                @Override
-                public void onClose(int code, Bundle data) {
-                    Log.i(TAG, "Connection lost.");
-                    notifyCListenersOnClose(code, data);
-                }
-
-            }, webSocketOptions());
+            if (StringUtils.isEmpty(wsuri)) return;
+            Log.d(LOG_TAG, "Status: Connecting to " + wsuri + "...");
+            webSocket.connect(wsuri, connectionHandler, webSocketOptions());
         } catch (WebSocketException e) {
-            Log.e(TAG, e.getMessage(), e);
+            Log.e(LOG_TAG, e.getMessage(), e);
         }
     }
 
@@ -148,8 +123,10 @@ public class WSocketManager {
     }
 
     public void sendLocation(Location location) {
-        if (isConnected() && location != null)
+        if (isConnected() && location != null) {
+            Log.i(LOG_TAG, "sendLocation:lat:" + location.getLatitude() + ":lon:" + location.getLongitude());
             webSocket.sendTextMessage(locationMessage(location));
+        }
     }
 
     private static String locationMessage(Location location) {
@@ -160,7 +137,42 @@ public class WSocketManager {
         WebSocketOptions webSocketOptions = new WebSocketOptions();
         webSocketOptions.setSocketConnectTimeout(CONNECTION_TIMEOUT);
         webSocketOptions.setSocketReceiveTimeout(RECEIVE_TIMEOUT);
-        webSocketOptions.setReconnectInterval(RECONNECT_INTERVAL);
+        //webSocketOptions.setReconnectInterval(RECONNECT_INTERVAL);
         return webSocketOptions;
+    }
+
+    public void addMessagesListener(IMessagesListener listener) {
+        if (listener != null) mListeners.add(listener);
+    }
+
+    public boolean delMessagesListener(IMessagesListener listener) {
+        return listener != null && mListeners.remove(listener);
+    }
+
+    public void addConnectionListener(IConnectionListener listener) {
+        if (listener != null) cListeners.add(listener);
+    }
+
+    public boolean delConnectionListener(IConnectionListener listener) {
+        return listener != null && cListeners.remove(listener);
+    }
+
+    private AlertDialog alertDialog;
+
+    public void handleConnectionClose(int code, Bundle data, Activity activity) {
+        if (data != null && activity != null) {
+            String statusMessage = data.getString(WebSocketConnection.EXTRA_STATUS_MESSAGE);
+            int statusCode = data.getInt(WebSocketConnection.EXTRA_STATUS_CODE);
+            if (alertDialog != null) alertDialog.dismiss();
+            alertDialog = new AlertDialog.Builder(activity)
+                    .setMessage(String.format("Status code:%s \nStatus message:%s", statusCode, statusMessage))
+                    .setCancelable(false)
+                    .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                        }
+                    }).create();
+            alertDialog.show();
+        }
     }
 }
