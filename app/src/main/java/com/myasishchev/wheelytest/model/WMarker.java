@@ -16,13 +16,13 @@ public class WMarker implements Serializable {
     private static final java.lang.String TAG_LONGITUDE = "lon";
 
     private int id;
-    private LatLng position;
+    private double latitude;
+    private double longitude;
 
     private WMarker(JSONObject jsonObject) {
         id = jsonObject.optInt(TAG_ID, 0);
-        double latitude = jsonObject.optDouble(TAG_LATITUDE, 0);
-        double longitude = jsonObject.optDouble(TAG_LONGITUDE, 0);
-        position = new LatLng(latitude, longitude);
+        latitude = jsonObject.optDouble(TAG_LATITUDE, 0);
+        longitude = jsonObject.optDouble(TAG_LONGITUDE, 0);
     }
 
     public static WMarker create(JSONObject jsonObject) {
@@ -34,7 +34,7 @@ public class WMarker implements Serializable {
     }
 
     public LatLng getPosition() {
-        return position;
+        return new LatLng(latitude, longitude);
     }
 
     @Override
