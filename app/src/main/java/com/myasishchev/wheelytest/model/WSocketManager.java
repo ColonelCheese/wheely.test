@@ -13,6 +13,8 @@ import com.myasishchev.wheelytest.WApplication;
 import com.myasishchev.wheelytest.ui.LoginActivity;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import de.tavendo.autobahn.WebSocket;
 import de.tavendo.autobahn.WebSocketConnection;
@@ -54,6 +56,16 @@ public class WSocketManager {
         public void onConnectionClose(int code, Bundle data);
     }
 
+    private List<IConnectionListener> listeners = new ArrayList<IConnectionListener>();
+
+    public void addConnectionListener(IConnectionListener listener) {
+        if (listener != null) listeners.add(listener);
+    }
+
+    public boolean delConnectionListener(IConnectionListener listener) {
+        return listener != null && listeners.remove(listener);
+    }
+
     private WebSocket webSocket = new WebSocketConnection();
 
     public WSocketManager(Application application) {
@@ -68,7 +80,7 @@ public class WSocketManager {
         return WApplication.get(activity).requestManager();
     }
 
-    public void connect(String username, String password, final IConnectionListener callback) {
+    public void connect(String username, String password) {
         final String wsuri = "ws://" + HOST + File.separator + String.format("?username=%s&password=%s", username, password);
         Log.d(TAG, "Status: Connecting to " + wsuri + "...");
         try {
@@ -76,8 +88,7 @@ public class WSocketManager {
                 @Override
                 public void onOpen() {
                     Log.d(TAG, "Status: Connected to " + wsuri);
-                    if (callback != null)
-                        callback.onConnectionOpen();
+                    notifyCListenersOnOpen();
                 }
 
                 @Override
@@ -88,13 +99,24 @@ public class WSocketManager {
                 @Override
                 public void onClose(int code, Bundle data) {
                     Log.i(TAG, "Connection lost.");
-                    if (callback != null)
-                        callback.onConnectionClose(code, data);
+                    notifyCListenersOnClose(code, data);
                 }
 
             }, webSocketOptions());
         } catch (WebSocketException e) {
             Log.e(TAG, e.getMessage(), e);
+        }
+    }
+
+    private void notifyCListenersOnClose(int code, Bundle data) {
+        for (IConnectionListener listener: listeners) {
+            listener.onConnectionClose(code, data);
+        }
+    }
+
+    private void notifyCListenersOnOpen() {
+        for (IConnectionListener listener: listeners) {
+            listener.onConnectionOpen();
         }
     }
 

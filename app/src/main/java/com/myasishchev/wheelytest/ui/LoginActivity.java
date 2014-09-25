@@ -20,24 +20,30 @@ public class LoginActivity extends ActionBarActivity {
     private EditText textUsername;
     private EditText textPassword;
 
+    private WSocketManager.IConnectionListener callback;
+
     private View.OnClickListener connectClick = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
             final ProgressDialog dialog = ProgressDialog.show(LoginActivity.this, "", "Connecting...");
             final WSocketManager socketManager = WSocketManager.get(LoginActivity.this);
-            socketManager.connect(textUsername.getText().toString(), textPassword.getText().toString(), new WSocketManager.IConnectionListener() {
+            callback = new WSocketManager.IConnectionListener() {
                 @Override
                 public void onConnectionOpen() {
                     dialog.dismiss();
+                    socketManager.delConnectionListener(callback);
                     startMapActivity();
                 }
 
                 @Override
                 public void onConnectionClose(int code, Bundle data) {
                     dialog.dismiss();
+                    socketManager.delConnectionListener(callback);
                     socketManager.handleConnectionClose(code, data, LoginActivity.this);
                 }
-            });
+            };
+            socketManager.addConnectionListener(callback);
+            socketManager.connect(textUsername.getText().toString(), textPassword.getText().toString());
         }
     };
 
@@ -59,18 +65,6 @@ public class LoginActivity extends ActionBarActivity {
         //intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
         finish();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        //WSocketManager.get(this).onResume(this);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        //WSocketManager.get(this).onStop(this);
     }
 
     @Override
