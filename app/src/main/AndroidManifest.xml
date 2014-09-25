@@ -42,11 +42,27 @@
             android:name="com.google.android.maps.v2.API_KEY"
             android:value="@string/google_maps_key" />
 
+        <service android:name=".net.WService"/>
+
         <receiver android:name=".net.NetworkStateReceiver" >
             <intent-filter>
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
             </intent-filter>
         </receiver>
+
+        <receiver android:name=".model.WSocketManager$IConnectionListener" >
+            <intent-filter>
+                <action android:name="com.myasishchev.wheelytest.socket.open" />
+                <action android:name="com.myasishchev.wheelytest.socket.close" />
+            </intent-filter>
+        </receiver>
+
+        <receiver android:name=".model.WSocketManager$IMessagesListener" >
+            <intent-filter>
+                <action android:name="com.myasishchev.wheelytest.socket.message" />
+            </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>

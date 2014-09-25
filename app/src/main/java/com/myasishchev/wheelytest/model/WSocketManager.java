@@ -3,13 +3,19 @@ package com.myasishchev.wheelytest.model;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Application;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.location.Location;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.myasishchev.wheelytest.WApplication;
+import com.myasishchev.wheelytest.net.WService;
+import com.myasishchev.wheelytest.net.WServiceManager;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -20,57 +26,51 @@ import java.util.List;
 import de.tavendo.autobahn.WebSocket;
 import de.tavendo.autobahn.WebSocketConnection;
 import de.tavendo.autobahn.WebSocketConnectionHandler;
-import de.tavendo.autobahn.WebSocketException;
 import de.tavendo.autobahn.WebSocketOptions;
 
 public class WSocketManager {
 
-    private static final String LOG_TAG = WSocketManager.class.getSimpleName();
-
     private static final String HOST = "mini-mdt.wheely.com";
 
-    private static final int CONNECTION_TIMEOUT = 30 * 1000;
-    private static final int RECEIVE_TIMEOUT = 30 * 1000;
-    private static final int RECONNECT_INTERVAL = 30 * 1000;
+    private static final String LOG_TAG = WSocketManager.class.getSimpleName();
 
-    public interface IConnectionListener {
-        public void onConnectionOpen();
-        public void onConnectionClose(int code, Bundle data);
+    public static final String ACTION_SOCKET_OPEN = "com.myasishchev.wheelytest.socket.open";
+    public static final String ACTION_SOCKET_CLOSE = "com.myasishchev.wheelytest.socket.close";
+    public static final String ACTION_SOCKET_MESSAGE = "com.myasishchev.wheelytest.socket.message";
+
+    public static class IConnectionListener extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (ACTION_SOCKET_OPEN.equals(intent.getAction())) {
+                onConnectionOpen();
+            } else
+            if (ACTION_SOCKET_CLOSE.equals(intent.getAction())) {
+                onConnectionClose(intent.getIntExtra(WService.EXTRAS_KEY_CODE, 0), intent.getExtras());
+            }
+        }
+
+        public void onConnectionOpen() {}
+        public void onConnectionClose(int code, Bundle data) {}
     }
 
-    public interface IMessagesListener {
-        public void onTextMessage(String payload);
-    }
+    public static class IMessagesListener extends BroadcastReceiver {
 
-    private List<IConnectionListener> cListeners = new ArrayList<IConnectionListener>();
-    private List<IMessagesListener> mListeners = new ArrayList<IMessagesListener>();
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (ACTION_SOCKET_MESSAGE.equals(intent.getAction())) {
+                onTextMessage(intent.getStringExtra(WService.EXTRAS_KEY_TEXT_MESSAGE));
+            }
+        }
+
+        public void onTextMessage(String payload) {}
+    }
 
     private String wsuri = "";
-    private WebSocket webSocket = new WebSocketConnection();
-    private WebSocketConnectionHandler connectionHandler = new WebSocketConnectionHandler() {
-
-        @Override
-        public void onOpen() {
-            Log.d(LOG_TAG, "Status: Connected to " + wsuri);
-            notifyCListenersOnOpen();
-        }
-
-        @Override
-        public void onTextMessage(String payload) {
-            Log.e(LOG_TAG, "Message received:\n" + payload);
-            notifyMListenersOnTextMessage(payload);
-        }
-
-        @Override
-        public void onClose(int code, Bundle data) {
-            Log.i(LOG_TAG, "Connection lost.");
-            notifyCListenersOnClose(code, data);
-        }
-
-    };
+    private final Application application;
 
     public WSocketManager(Application application) {
-
+        this.application = application;
     }
 
     public static WSocketManager get(Context context) {
@@ -83,89 +83,61 @@ public class WSocketManager {
 
     public void connect(String username, String password) {
         wsuri = "ws://" + HOST + File.separator + String.format("?username=%s&password=%s", username, password);
-        reconnect();
+        WServiceManager.start(application, WServiceManager.intent(application, wsuri, WService.class));
     }
 
     public void reconnect() {
-        try {
-            if (StringUtils.isEmpty(wsuri)) return;
-            Log.d(LOG_TAG, "Status: Connecting to " + wsuri + "...");
-            webSocket.connect(wsuri, connectionHandler, webSocketOptions());
-        } catch (WebSocketException e) {
-            Log.e(LOG_TAG, e.getMessage(), e);
-        }
-    }
-
-    private void notifyMListenersOnTextMessage(String message) {
-        for (IMessagesListener listener: mListeners) {
-            listener.onTextMessage(message);
-        }
-    }
-
-    private void notifyCListenersOnClose(int code, Bundle data) {
-        for (IConnectionListener listener: cListeners) {
-            listener.onConnectionClose(code, data);
-        }
-    }
-
-    private void notifyCListenersOnOpen() {
-        for (IConnectionListener listener: cListeners) {
-            listener.onConnectionOpen();
-        }
-    }
-
-    public boolean isConnected() {
-        return webSocket.isConnected();
+        WServiceManager.start(application, WServiceManager.intent(application, wsuri, WService.class));
     }
 
     public void disconnect() {
-        webSocket.disconnect();
+       WServiceManager.stop(application, WService.class);
     }
 
     public void sendLocation(Location location) {
-        if (isConnected() && location != null) {
-            Log.i(LOG_TAG, "sendLocation:lat:" + location.getLatitude() + ":lon:" + location.getLongitude());
-            webSocket.sendTextMessage(locationMessage(location));
-        }
+        WServiceManager.start(application, WServiceManager.intent(application, location, WService.class));
     }
 
-    private static String locationMessage(Location location) {
+    public static String locationMessage(Location location) {
         return String.format("{\"lat\": %s, \"lon\":%s}", location.getLatitude(), location.getLongitude());
     }
 
-    private static WebSocketOptions webSocketOptions() {
-        WebSocketOptions webSocketOptions = new WebSocketOptions();
-        webSocketOptions.setSocketConnectTimeout(CONNECTION_TIMEOUT);
-        webSocketOptions.setSocketReceiveTimeout(RECEIVE_TIMEOUT);
-        //webSocketOptions.setReconnectInterval(RECONNECT_INTERVAL);
-        return webSocketOptions;
+    public void addMessagesListener(IMessagesListener callback) {
+        IntentFilter iff = new IntentFilter();
+        iff.addAction(ACTION_SOCKET_MESSAGE);
+        LocalBroadcastManager.getInstance(application).registerReceiver(callback, iff);
     }
 
-    public void addMessagesListener(IMessagesListener listener) {
-        if (listener != null) mListeners.add(listener);
+    public void delMessagesListener(IMessagesListener listener) {
+        LocalBroadcastManager.getInstance(application).unregisterReceiver(listener);
     }
 
-    public boolean delMessagesListener(IMessagesListener listener) {
-        return listener != null && mListeners.remove(listener);
+    public void addConnectionListener(IConnectionListener callback) {
+        IntentFilter iff = new IntentFilter();
+        iff.addAction(ACTION_SOCKET_CLOSE);
+        iff.addAction(ACTION_SOCKET_OPEN);
+        LocalBroadcastManager.getInstance(application).registerReceiver(callback, iff);
     }
 
-    public void addConnectionListener(IConnectionListener listener) {
-        if (listener != null) cListeners.add(listener);
-    }
-
-    public boolean delConnectionListener(IConnectionListener listener) {
-        return listener != null && cListeners.remove(listener);
+    public void delConnectionListener(IConnectionListener callback) {
+        LocalBroadcastManager.getInstance(application).unregisterReceiver(callback);
     }
 
     private AlertDialog alertDialog;
 
     public void handleConnectionClose(int code, Bundle data, Activity activity) {
         if (data != null && activity != null) {
+
+            //int statusCode = data.getInt(WebSocketConnection.EXTRA_STATUS_CODE);
+
             String statusMessage = data.getString(WebSocketConnection.EXTRA_STATUS_MESSAGE);
-            int statusCode = data.getInt(WebSocketConnection.EXTRA_STATUS_CODE);
+            if (StringUtils.isEmpty(statusMessage)) {
+                statusMessage = data.getString(WebSocketConnection.EXTRA_REASON);
+            }
+
             if (alertDialog != null) alertDialog.dismiss();
             alertDialog = new AlertDialog.Builder(activity)
-                    .setMessage(String.format("Status code:%s \nStatus message:%s", statusCode, statusMessage))
+                    .setMessage(statusMessage /*String.format("Status code:%s \nStatus message:%s", statusCode, statusMessage)*/)
                     .setCancelable(false)
                     .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {

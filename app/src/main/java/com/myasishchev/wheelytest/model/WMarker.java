@@ -6,9 +6,6 @@ import org.json.JSONObject;
 
 import java.io.Serializable;
 
-/**
- * Created by MyasishchevA on 25.09.2014.
- */
 public class WMarker implements Serializable {
 
     private static final java.lang.String TAG_ID = "id";

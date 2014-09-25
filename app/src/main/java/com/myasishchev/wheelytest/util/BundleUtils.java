@@ -6,9 +6,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by MyasishchevA on 25.09.2014.
- */
 public class BundleUtils {
 
     public static <T extends Serializable> List<T> getArguments(Bundle bundle, String tag, Class<T> clazz) {

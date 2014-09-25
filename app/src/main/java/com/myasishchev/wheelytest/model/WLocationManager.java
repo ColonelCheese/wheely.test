@@ -56,10 +56,6 @@ public class WLocationManager implements android.location.LocationListener {
         return location;
     }
 
-    public void setLocation(Location location) {
-        onLocationChanged(location);
-    }
-
     public void addLocationListener(ILocationListener listener) {
         listener.onLocationChanged(location);
         listeners.add(listener);

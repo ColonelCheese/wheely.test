@@ -2,7 +2,9 @@ package com.myasishchev.wheelytest.ui;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -28,6 +30,7 @@ public class LoginActivity extends ActionBarActivity {
             final ProgressDialog dialog = ProgressDialog.show(LoginActivity.this, "", "Connecting...");
             final WSocketManager socketManager = WSocketManager.get(LoginActivity.this);
             callback = new WSocketManager.IConnectionListener() {
+
                 @Override
                 public void onConnectionOpen() {
                     dialog.dismiss();
@@ -51,8 +54,6 @@ public class LoginActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-
-        if (WSocketManager.get(this).isConnected()) startMapActivity();
 
         textUsername = (EditText) findViewById(R.id.username);
         textPassword = (EditText) findViewById(R.id.password);

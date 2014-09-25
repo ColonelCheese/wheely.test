@@ -10,13 +10,12 @@ import android.os.Bundle;
 import com.myasishchev.wheelytest.model.WLocationManager;
 import com.myasishchev.wheelytest.model.WSocketManager;
 
-/**
- * Created by MyasishchevA on 15.05.2014.
- */
-public class NetworkStateReceiver extends BroadcastReceiver implements WSocketManager.IConnectionListener {
+public class NetworkStateReceiver extends BroadcastReceiver {
 
     private WSocketManager socketManager;
     private WLocationManager locationManager;
+
+    private WSocketManager.IConnectionListener callback;
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -26,23 +25,23 @@ public class NetworkStateReceiver extends BroadcastReceiver implements WSocketMa
         ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetInfo = connectivityManager.getActiveNetworkInfo();
 
-        boolean isNetworkPresent = activeNetInfo != null && activeNetInfo.isConnected();
-        if (isNetworkPresent && !socketManager.isConnected()) {
-            socketManager.addConnectionListener(this);
+        if (activeNetInfo != null && activeNetInfo.isConnected()) {
+            callback = new WSocketManager.IConnectionListener() {
+                @Override
+                public void onConnectionOpen() {
+                    socketManager.sendLocation(locationManager.getLocation());
+                    socketManager.delConnectionListener(callback);
+                }
+
+                @Override
+                public void onConnectionClose(int code, Bundle data) {
+                    socketManager.delConnectionListener(callback);
+                }
+            };
+            socketManager.addConnectionListener(callback);
             socketManager.reconnect();
-        } else if (socketManager.isConnected()) {
+        } else {
             socketManager.disconnect();
         }
-    }
-
-    @Override
-    public void onConnectionOpen() {
-        socketManager.sendLocation(locationManager.getLocation());
-        socketManager.delConnectionListener(this);
-    }
-
-    @Override
-    public void onConnectionClose(int code, Bundle data) {
-        socketManager.delConnectionListener(this);
     }
 }

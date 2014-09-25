@@ -25,7 +25,7 @@ import org.json.JSONArray;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MapActivity extends ActionBarActivity implements WLocationManager.ILocationListener, WSocketManager.IMessagesListener {
+public class MapActivity extends ActionBarActivity implements WLocationManager.ILocationListener {
 
     private static final String LOG_TAG = MapActivity.class.getSimpleName();
     private static final float DEFAULT_MAP_ZOOM = 11.0f;
@@ -39,6 +39,21 @@ public class MapActivity extends ActionBarActivity implements WLocationManager.I
 
     private SparseArray<Marker> gmMarkers = new SparseArray<Marker>();
     private SparseArray<WMarker> wMarkers = new SparseArray<WMarker>();
+
+    private WSocketManager.IMessagesListener callback = new WSocketManager.IMessagesListener() {
+        @Override
+        public void onTextMessage(String payload) {
+            try {
+                JSONArray jsonArray = new JSONArray(payload);
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    WMarker wMarker = WMarker.create(jsonArray.getJSONObject(i));
+                    addMapMarker(wMarker);
+                }
+            } catch (Exception e) {
+                Log.e(LOG_TAG, e.getMessage(), e);
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,7 +82,7 @@ public class MapActivity extends ActionBarActivity implements WLocationManager.I
     protected void onResume() {
         super.onResume();
         locationManager.addLocationListener(this);
-        socketManager.addMessagesListener(this);
+        socketManager.addMessagesListener(callback);
         setUpMapIfNeeded();
     }
 
@@ -75,7 +90,7 @@ public class MapActivity extends ActionBarActivity implements WLocationManager.I
     protected void onStop() {
         super.onStop();
         locationManager.delLocationListener(this);
-        socketManager.delMessagesListener(this);
+        socketManager.delMessagesListener(callback);
     }
 
     @Override
@@ -143,19 +158,6 @@ public class MapActivity extends ActionBarActivity implements WLocationManager.I
             googleMap.animateCamera(cameraUpdate);
         } else {
             location.setPosition(latLng);
-        }
-    }
-
-    @Override
-    public void onTextMessage(String payload) {
-        try {
-            JSONArray jsonArray = new JSONArray(payload);
-            for (int i = 0; i < jsonArray.length(); i++) {
-                WMarker wMarker = WMarker.create(jsonArray.getJSONObject(i));
-                addMapMarker(wMarker);
-            }
-        } catch (Exception e) {
-            Log.e(LOG_TAG, e.getMessage(), e);
         }
     }
 
