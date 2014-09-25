@@ -1,66 +1,110 @@
 package com.myasishchev.wheelytest.ui;
 
-import android.support.v4.app.FragmentActivity;
+import android.location.Location;
 import android.os.Bundle;
+import android.support.v4.app.FragmentManager;
+import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.myasishchev.wheelytest.R;
+import com.myasishchev.wheelytest.model.WLocationManager;
+import com.myasishchev.wheelytest.model.WSocketManager;
 
-public class MapActivity extends FragmentActivity {
+public class MapActivity extends ActionBarActivity implements WLocationManager.ILocationListener {
 
-    private GoogleMap mMap; // Might be null if Google Play services APK is not available.
+    private static final String LOG_TAG = MapActivity.class.getSimpleName();
+    private static final float DEFAULT_MAP_ZOOM = 15.0f;
+
+    private Marker location;
+    private GoogleMap googleMap; // Might be null if Google Play services APK is not available.
+
+    private WLocationManager locationManager;
+    private WSocketManager socketManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
+
+        socketManager = WSocketManager.get(this);
+
+        locationManager = WLocationManager.get(this);
+        locationManager.startUpdateLocation();
+
         setUpMapIfNeeded();
+    }
+
+    private SupportMapFragment getMapFragment() {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        SupportMapFragment fragmentMap = (SupportMapFragment) fragmentManager.findFragmentById(R.id.map);
+        if (fragmentMap == null) {
+            fragmentMap = SupportMapFragment.newInstance();
+            fragmentManager.beginTransaction().replace(R.id.map, fragmentMap).commit();
+        }
+        return fragmentMap;
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        locationManager.addLocationListener(this);
+        //WSocketManager.get(this).addPointsUpdateListener(this);
         setUpMapIfNeeded();
     }
 
-    /**
-     * Sets up the map if it is possible to do so (i.e., the Google Play services APK is correctly
-     * installed) and the map has not already been instantiated.. This will ensure that we only ever
-     * call {@link #setUpMap()} once when {@link #mMap} is not null.
-     * <p>
-     * If it isn't installed {@link SupportMapFragment} (and
-     * {@link com.google.android.gms.maps.MapView MapView}) will show a prompt for the user to
-     * install/update the Google Play services APK on their device.
-     * <p>
-     * A user can return to this FragmentActivity after following the prompt and correctly
-     * installing/updating/enabling the Google Play services. Since the FragmentActivity may not
-     * have been completely destroyed during this process (it is likely that it would only be
-     * stopped or paused), {@link #onCreate(Bundle)} may not be called again so we should call this
-     * method in {@link #onResume()} to guarantee that it will be called.
-     */
+    @Override
+    protected void onStop() {
+        super.onStop();
+        locationManager.delLocationListener(this);
+        //WSocketManager.get(this).delPointsUpdateListener(this);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        locationManager.stopUpdateLocation();
+    }
+
     private void setUpMapIfNeeded() {
         // Do a null check to confirm that we have not already instantiated the map.
-        if (mMap == null) {
+        if (googleMap == null) {
             // Try to obtain the map from the SupportMapFragment.
-            mMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map))
-                    .getMap();
+            googleMap = getMapFragment().getMap();
             // Check if we were successful in obtaining the map.
-            if (mMap != null) {
+            if (googleMap != null) {
                 setUpMap();
             }
         }
     }
 
-    /**
-     * This is where we can add markers or lines, add listeners or move the camera. In this case, we
-     * just add a marker near Africa.
-     * <p>
-     * This should only be called once and when we are sure that {@link #mMap} is not null.
-     */
     private void setUpMap() {
-        mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Marker"));
+        googleMap.getUiSettings().setZoomControlsEnabled(true);
+        onLocationChanged(locationManager.getLocation());
     }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        if (location != null) {
+            socketManager.sendLocation(location);
+            setLocation(new LatLng(location.getLatitude(), location.getLongitude()));
+        }
+    }
+
+    protected void setLocation(LatLng latLng) {
+        if (location == null) {
+            location = googleMap.addMarker(new MarkerOptions().position(latLng));
+            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, DEFAULT_MAP_ZOOM);
+            googleMap.animateCamera(cameraUpdate);
+        } else {
+            location.setPosition(latLng);
+        }
+    }
+
 }
