@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
+import android.util.SparseArray;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -16,8 +17,13 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.myasishchev.wheelytest.R;
 import com.myasishchev.wheelytest.model.WLocationManager;
 import com.myasishchev.wheelytest.model.WSocketManager;
+import com.myasishchev.wheelytest.model.WMarker;
 
-public class MapActivity extends ActionBarActivity implements WLocationManager.ILocationListener {
+import org.json.JSONArray;
+
+import java.util.HashMap;
+
+public class MapActivity extends ActionBarActivity implements WLocationManager.ILocationListener, WSocketManager.IMessagesListener {
 
     private static final String LOG_TAG = MapActivity.class.getSimpleName();
     private static final float DEFAULT_MAP_ZOOM = 15.0f;
@@ -25,8 +31,10 @@ public class MapActivity extends ActionBarActivity implements WLocationManager.I
     private Marker location;
     private GoogleMap googleMap; // Might be null if Google Play services APK is not available.
 
-    private WLocationManager locationManager;
     private WSocketManager socketManager;
+    private WLocationManager locationManager;
+
+    private SparseArray<Marker> markers = new SparseArray<Marker>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,7 +63,7 @@ public class MapActivity extends ActionBarActivity implements WLocationManager.I
     protected void onResume() {
         super.onResume();
         locationManager.addLocationListener(this);
-        //WSocketManager.get(this).addPointsUpdateListener(this);
+        socketManager.addMessagesListener(this);
         setUpMapIfNeeded();
     }
 
@@ -63,7 +71,7 @@ public class MapActivity extends ActionBarActivity implements WLocationManager.I
     protected void onStop() {
         super.onStop();
         locationManager.delLocationListener(this);
-        //WSocketManager.get(this).delPointsUpdateListener(this);
+        socketManager.delMessagesListener(this);
     }
 
     @Override
@@ -107,4 +115,22 @@ public class MapActivity extends ActionBarActivity implements WLocationManager.I
         }
     }
 
+    @Override
+    public void onTextMessage(String payload) {
+        try {
+            JSONArray jsonArray = new JSONArray(payload);
+            for (int i = 0; i < jsonArray.length(); i++) {
+                WMarker wMarker = WMarker.create(jsonArray.getJSONObject(i));
+                Marker marker = markers.get(wMarker.getId());
+                if (marker == null) {
+                    marker = googleMap.addMarker(new MarkerOptions().position(wMarker.getPosition()));
+                    markers.put(wMarker.getId(), marker);
+                } else {
+                    marker.setPosition(wMarker.getPosition());
+                }
+            }
+        } catch (Exception e) {
+            Log.e(LOG_TAG, e.getMessage(), e);
+        }
+    }
 }

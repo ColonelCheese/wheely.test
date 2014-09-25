@@ -10,7 +10,6 @@ import android.os.Bundle;
 import android.util.Log;
 
 import com.myasishchev.wheelytest.WApplication;
-import com.myasishchev.wheelytest.ui.LoginActivity;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -51,19 +50,32 @@ public class WSocketManager {
         }
     }
 
+    public void addMessagesListener(IMessagesListener listener) {
+        if (listener != null) mListeners.add(listener);
+    }
+
+    public boolean delMessagesListener(IMessagesListener listener) {
+        return listener != null && mListeners.remove(listener);
+    }
+
     public interface IConnectionListener {
         public void onConnectionOpen();
         public void onConnectionClose(int code, Bundle data);
     }
 
-    private List<IConnectionListener> listeners = new ArrayList<IConnectionListener>();
+    public interface IMessagesListener {
+        public void onTextMessage(String payload);
+    }
+
+    private List<IConnectionListener> cListeners = new ArrayList<IConnectionListener>();
+    private List<IMessagesListener> mListeners = new ArrayList<IMessagesListener>();
 
     public void addConnectionListener(IConnectionListener listener) {
-        if (listener != null) listeners.add(listener);
+        if (listener != null) cListeners.add(listener);
     }
 
     public boolean delConnectionListener(IConnectionListener listener) {
-        return listener != null && listeners.remove(listener);
+        return listener != null && cListeners.remove(listener);
     }
 
     private WebSocket webSocket = new WebSocketConnection();
@@ -94,6 +106,7 @@ public class WSocketManager {
                 @Override
                 public void onTextMessage(String payload) {
                     Log.e(TAG, "Message received:\n" + payload);
+                    notifyMListenersOnTextMessage(payload);
                 }
 
                 @Override
@@ -108,14 +121,20 @@ public class WSocketManager {
         }
     }
 
+    private void notifyMListenersOnTextMessage(String message) {
+        for (IMessagesListener listener: mListeners) {
+            listener.onTextMessage(message);
+        }
+    }
+
     private void notifyCListenersOnClose(int code, Bundle data) {
-        for (IConnectionListener listener: listeners) {
+        for (IConnectionListener listener: cListeners) {
             listener.onConnectionClose(code, data);
         }
     }
 
     private void notifyCListenersOnOpen() {
-        for (IConnectionListener listener: listeners) {
+        for (IConnectionListener listener: cListeners) {
             listener.onConnectionOpen();
         }
     }
@@ -134,7 +153,7 @@ public class WSocketManager {
     }
 
     private static String locationMessage(Location location) {
-        return String.format("{\"lat\":\"%s\", \"lon\":\"%s\"}", location.getLatitude(), location.getLongitude());
+        return String.format("{\"lat\": %s, \"lon\":%s}", location.getLatitude(), location.getLongitude());
     }
 
     private static WebSocketOptions webSocketOptions() {
