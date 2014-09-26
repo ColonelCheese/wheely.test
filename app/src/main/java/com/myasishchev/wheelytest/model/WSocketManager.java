@@ -80,17 +80,17 @@ public class WSocketManager {
         WServiceManager.start(application, WServiceManager.intent(application, wsuri, WService.class));
     }
 
-    public void reconnect() {
+    /*public void reconnect() {
         WServiceManager.start(application, WServiceManager.intent(application, wsuri, WService.class));
-    }
+    }*/
 
     public void disconnect() {
        WServiceManager.stop(application, WService.class);
     }
 
-    public void sendLocation(Location location) {
+    /*public void sendLocation(Location location) {
         WServiceManager.start(application, WServiceManager.intent(application, location, WService.class));
-    }
+    }*/
 
     public static String locationMessage(Location location) {
         return String.format("{\"lat\": %s, \"lon\":%s}", location.getLatitude(), location.getLongitude());
@@ -133,9 +133,9 @@ public class WSocketManager {
             alertDialog = new AlertDialog.Builder(activity)
                     .setMessage(statusMessage /*String.format("Status code:%s \nStatus message:%s", statusCode, statusMessage)*/)
                     .setCancelable(false)
-                    .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
-                            dialog.cancel();
+                            dialog.dismiss();
                         }
                     }).create();
             alertDialog.show();

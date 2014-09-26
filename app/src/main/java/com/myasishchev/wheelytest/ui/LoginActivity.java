@@ -14,7 +14,7 @@ import android.widget.EditText;
 import com.myasishchev.wheelytest.R;
 import com.myasishchev.wheelytest.model.WSocketManager;
 
-public class LoginActivity extends ActionBarActivity {
+public class LoginActivity extends ExitActivity {
 
     private static final String KEY_USERNAME = "username";
     private static final String KEY_PASSWORD = "password";
@@ -27,10 +27,9 @@ public class LoginActivity extends ActionBarActivity {
     private View.OnClickListener connectClick = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            final ProgressDialog dialog = ProgressDialog.show(LoginActivity.this, "", "Connecting...");
+            final ProgressDialog dialog = ProgressDialog.show(LoginActivity.this, "", getString(R.string.connecting));
             final WSocketManager socketManager = WSocketManager.get(LoginActivity.this);
             callback = new WSocketManager.IConnectionListener() {
-
                 @Override
                 public void onConnectionOpen() {
                     dialog.dismiss();

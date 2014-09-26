@@ -9,5 +9,8 @@
     <string name="username">Username</string>
     <string name="password">Password</string>
     <string name="title_activity_map">Map</string>
+    <string name="exit_app">Exit application?</string>
+    <string name="connecting">Connecting...</string>
+    <string name="service_started">Service started</string>
 
 </resources>

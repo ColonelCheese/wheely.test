@@ -1,5 +1,7 @@
 package com.myasishchev.wheelytest.ui;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
@@ -26,7 +28,7 @@ import org.json.JSONArray;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MapActivity extends ActionBarActivity implements WLocationManager.ILocationListener, WNetworkManager.INetworkListener {
+public class MapActivity extends ExitActivity implements WLocationManager.ILocationListener {
 
     private static final String LOG_TAG = MapActivity.class.getSimpleName();
     private static final float DEFAULT_MAP_ZOOM = 11.0f;
@@ -37,7 +39,6 @@ public class MapActivity extends ActionBarActivity implements WLocationManager.I
 
     private WSocketManager socketManager;
     private WLocationManager locationManager;
-    private WNetworkManager networkManager;
 
     private SparseArray<Marker> gmMarkers = new SparseArray<Marker>();
     private SparseArray<WMarker> wMarkers = new SparseArray<WMarker>();
@@ -61,15 +62,8 @@ public class MapActivity extends ActionBarActivity implements WLocationManager.I
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
-
-        networkManager = WNetworkManager.get(this);
-        networkManager.addNetworkListener(this);
-
         socketManager = WSocketManager.get(this);
-
         locationManager = WLocationManager.get(this);
-        locationManager.startUpdateLocation();
-
         setUpMapIfNeeded();
     }
 
@@ -88,7 +82,6 @@ public class MapActivity extends ActionBarActivity implements WLocationManager.I
         super.onResume();
         locationManager.addLocationListener(this);
         socketManager.addMessagesListener(mCallback);
-
         setUpMapIfNeeded();
     }
 
@@ -104,14 +97,6 @@ public class MapActivity extends ActionBarActivity implements WLocationManager.I
         super.onDestroy();
         gmMarkers.clear();
         wMarkers.clear();
-        networkManager.delNetworkListener(this);
-        locationManager.stopUpdateLocation();
-    }
-
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        socketManager.disconnect();
     }
 
     @Override
@@ -153,7 +138,6 @@ public class MapActivity extends ActionBarActivity implements WLocationManager.I
     @Override
     public void onLocationChanged(Location location) {
         if (location != null) {
-            socketManager.sendLocation(location);
             setLocation(new LatLng(location.getLatitude(), location.getLongitude()));
         }
     }
@@ -177,29 +161,5 @@ public class MapActivity extends ActionBarActivity implements WLocationManager.I
             marker.setPosition(wMarker.getPosition());
         }
         wMarkers.put(wMarker.getId(), wMarker);
-    }
-
-    private WSocketManager.IConnectionListener cnCallback;
-
-    @Override
-    public void onNetworkStateChanged(boolean isConnected) {
-        if (isConnected) {
-            cnCallback = new WSocketManager.IConnectionListener() {
-                @Override
-                public void onConnectionOpen() {
-                    socketManager.sendLocation(locationManager.getLocation());
-                    socketManager.delConnectionListener(cnCallback);
-                }
-
-                @Override
-                public void onConnectionClose(int code, Bundle data) {
-                    socketManager.delConnectionListener(cnCallback);
-                }
-            };
-            socketManager.addConnectionListener(cnCallback);
-            socketManager.reconnect();
-        } else {
-            socketManager.disconnect();
-        }
     }
 }
