@@ -1,10 +1,8 @@
-package com.myasishchev.wheelytest.net;
+package com.myasishchev.wheelytest.service;
 
 import android.app.Application;
 import android.content.Intent;
 import android.location.Location;
-import android.os.Handler;
-import android.os.Messenger;
 
 /**
  * Created by MyasishchevA on 25.09.2014.

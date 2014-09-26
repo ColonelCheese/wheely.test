@@ -5,12 +5,14 @@ import android.app.Application;
 import android.content.Context;
 
 import com.myasishchev.wheelytest.model.WLocationManager;
+import com.myasishchev.wheelytest.net.WNetworkManager;
 import com.myasishchev.wheelytest.model.WSocketManager;
 
 public class WApplication extends Application {
 
     private WLocationManager locationManager;
     private WSocketManager requestManager;
+    private WNetworkManager networkManager;
 
     @Override
     public void onCreate() {
@@ -39,5 +41,12 @@ public class WApplication extends Application {
         if (requestManager == null)
             requestManager = new WSocketManager(this);
         return requestManager;
+    }
+
+    public WNetworkManager networkManager() {
+        if (networkManager == null) {
+            networkManager = new WNetworkManager();
+        }
+        return networkManager;
     }
 }

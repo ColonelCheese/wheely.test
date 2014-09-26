@@ -18,6 +18,7 @@ import com.myasishchev.wheelytest.R;
 import com.myasishchev.wheelytest.model.WLocationManager;
 import com.myasishchev.wheelytest.model.WMarker;
 import com.myasishchev.wheelytest.model.WSocketManager;
+import com.myasishchev.wheelytest.net.WNetworkManager;
 import com.myasishchev.wheelytest.util.BundleUtils;
 
 import org.json.JSONArray;
@@ -25,7 +26,7 @@ import org.json.JSONArray;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MapActivity extends ActionBarActivity implements WLocationManager.ILocationListener {
+public class MapActivity extends ActionBarActivity implements WLocationManager.ILocationListener, WNetworkManager.INetworkListener {
 
     private static final String LOG_TAG = MapActivity.class.getSimpleName();
     private static final float DEFAULT_MAP_ZOOM = 11.0f;
@@ -36,11 +37,12 @@ public class MapActivity extends ActionBarActivity implements WLocationManager.I
 
     private WSocketManager socketManager;
     private WLocationManager locationManager;
+    private WNetworkManager networkManager;
 
     private SparseArray<Marker> gmMarkers = new SparseArray<Marker>();
     private SparseArray<WMarker> wMarkers = new SparseArray<WMarker>();
 
-    private WSocketManager.IMessagesListener callback = new WSocketManager.IMessagesListener() {
+    private WSocketManager.IMessagesListener mCallback = new WSocketManager.IMessagesListener() {
         @Override
         public void onTextMessage(String payload) {
             try {
@@ -59,6 +61,9 @@ public class MapActivity extends ActionBarActivity implements WLocationManager.I
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
+
+        networkManager = WNetworkManager.get(this);
+        networkManager.addNetworkListener(this);
 
         socketManager = WSocketManager.get(this);
 
@@ -82,7 +87,8 @@ public class MapActivity extends ActionBarActivity implements WLocationManager.I
     protected void onResume() {
         super.onResume();
         locationManager.addLocationListener(this);
-        socketManager.addMessagesListener(callback);
+        socketManager.addMessagesListener(mCallback);
+
         setUpMapIfNeeded();
     }
 
@@ -90,7 +96,7 @@ public class MapActivity extends ActionBarActivity implements WLocationManager.I
     protected void onStop() {
         super.onStop();
         locationManager.delLocationListener(this);
-        socketManager.delMessagesListener(callback);
+        socketManager.delMessagesListener(mCallback);
     }
 
     @Override
@@ -98,6 +104,7 @@ public class MapActivity extends ActionBarActivity implements WLocationManager.I
         super.onDestroy();
         gmMarkers.clear();
         wMarkers.clear();
+        networkManager.delNetworkListener(this);
         locationManager.stopUpdateLocation();
     }
 
@@ -170,5 +177,29 @@ public class MapActivity extends ActionBarActivity implements WLocationManager.I
             marker.setPosition(wMarker.getPosition());
         }
         wMarkers.put(wMarker.getId(), wMarker);
+    }
+
+    private WSocketManager.IConnectionListener cnCallback;
+
+    @Override
+    public void onNetworkStateChanged(boolean isConnected) {
+        if (isConnected) {
+            cnCallback = new WSocketManager.IConnectionListener() {
+                @Override
+                public void onConnectionOpen() {
+                    socketManager.sendLocation(locationManager.getLocation());
+                    socketManager.delConnectionListener(cnCallback);
+                }
+
+                @Override
+                public void onConnectionClose(int code, Bundle data) {
+                    socketManager.delConnectionListener(cnCallback);
+                }
+            };
+            socketManager.addConnectionListener(cnCallback);
+            socketManager.reconnect();
+        } else {
+            socketManager.disconnect();
+        }
     }
 }

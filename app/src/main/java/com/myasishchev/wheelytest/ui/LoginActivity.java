@@ -55,6 +55,8 @@ public class LoginActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        WSocketManager.get(this).disconnect();
+
         textUsername = (EditText) findViewById(R.id.username);
         textPassword = (EditText) findViewById(R.id.password);
 

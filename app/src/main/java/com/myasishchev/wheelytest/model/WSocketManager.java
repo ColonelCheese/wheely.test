@@ -11,22 +11,16 @@ import android.content.IntentFilter;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 
 import com.myasishchev.wheelytest.WApplication;
-import com.myasishchev.wheelytest.net.WService;
-import com.myasishchev.wheelytest.net.WServiceManager;
+import com.myasishchev.wheelytest.service.WService;
+import com.myasishchev.wheelytest.service.WServiceManager;
 
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
-import de.tavendo.autobahn.WebSocket;
 import de.tavendo.autobahn.WebSocketConnection;
-import de.tavendo.autobahn.WebSocketConnectionHandler;
-import de.tavendo.autobahn.WebSocketOptions;
 
 public class WSocketManager {
 

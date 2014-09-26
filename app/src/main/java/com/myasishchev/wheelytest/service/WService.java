@@ -1,4 +1,4 @@
-package com.myasishchev.wheelytest.net;
+package com.myasishchev.wheelytest.service;
 
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.Messenger;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -182,7 +181,7 @@ public class WService extends Service {
 
         Notification notification = new NotificationCompat.Builder(context)
                 .setContentTitle(context.getResources().getString(R.string.app_name))
-                .setContentText("Start foreground service")
+                .setContentText("Foreground service started")
                 .setSmallIcon(R.drawable.ic_launcher)
                 .setOnlyAlertOnce(true)
                 .setContentIntent(contentIntent)
