@@ -1,16 +1,16 @@
 include ':app'
 include ':Autobahn'
 
-include ':Demo:SimplePubSub'
-include ':Demo:BroadcastClient'
-include ':Demo:TestSuiteClient'
-include ':Demo:EchoClient'
-include ':Demo:SimpleRpc'
+//include ':Demo:SimplePubSub'
+//include ':Demo:BroadcastClient'
+//include ':Demo:TestSuiteClient'
+//include ':Demo:EchoClient'
+//include ':Demo:SimpleRpc'
 
 project(':Autobahn').projectDir = new File(settingsDir, '/libs-sources/Autobahn/Autobahn')
 
-project(':Demo:SimplePubSub').projectDir = new File(settingsDir, '/libs-sources/Autobahn/Demo/SimplePubSub')
-project(':Demo:BroadcastClient').projectDir = new File(settingsDir, '/libs-sources/Autobahn/Demo/BroadcastClient')
-project(':Demo:TestSuiteClient').projectDir = new File(settingsDir, '/libs-sources/Autobahn/Demo/TestSuiteClient')
-project(':Demo:EchoClient').projectDir = new File(settingsDir, '/libs-sources/Autobahn/Demo/EchoClient')
-project(':Demo:SimpleRpc').projectDir = new File(settingsDir, '/libs-sources/Autobahn/Demo/SimpleRpc')
+//project(':Demo:SimplePubSub').projectDir = new File(settingsDir, '/libs-sources/Autobahn/Demo/SimplePubSub')
+//project(':Demo:BroadcastClient').projectDir = new File(settingsDir, '/libs-sources/Autobahn/Demo/BroadcastClient')
+//project(':Demo:TestSuiteClient').projectDir = new File(settingsDir, '/libs-sources/Autobahn/Demo/TestSuiteClient')
+//project(':Demo:EchoClient').projectDir = new File(settingsDir, '/libs-sources/Autobahn/Demo/EchoClient')
+//project(':Demo:SimpleRpc').projectDir = new File(settingsDir, '/libs-sources/Autobahn/Demo/SimpleRpc')

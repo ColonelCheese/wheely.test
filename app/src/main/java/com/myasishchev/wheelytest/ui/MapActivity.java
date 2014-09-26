@@ -1,11 +1,8 @@
 package com.myasishchev.wheelytest.ui;
 
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
-import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -20,7 +17,6 @@ import com.myasishchev.wheelytest.R;
 import com.myasishchev.wheelytest.model.WLocationManager;
 import com.myasishchev.wheelytest.model.WMarker;
 import com.myasishchev.wheelytest.model.WSocketManager;
-import com.myasishchev.wheelytest.net.WNetworkManager;
 import com.myasishchev.wheelytest.util.BundleUtils;
 
 import org.json.JSONArray;

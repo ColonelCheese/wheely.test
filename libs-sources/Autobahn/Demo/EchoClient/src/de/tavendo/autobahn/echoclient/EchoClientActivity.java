@@ -119,7 +119,7 @@ public class EchoClientActivity extends Activity {
             }
 
             @Override
-            public void onClose(int code, String reason) {
+            public void onClose(int code, Bundle reason) {
                alert("Connection lost.");
                mStatusline.setText("Status: Ready.");
                setButtonConnect();
