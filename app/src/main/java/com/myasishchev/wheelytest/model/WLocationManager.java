@@ -21,7 +21,7 @@ public class WLocationManager implements android.location.LocationListener {
     // Update frequency in minutes
     private static final int     UPDATE_INTERVAL_IN_MINUTES   = 1;
     // Update frequency in seconds
-    private static final int     UPDATE_INTERVAL_IN_SECONDS   = 30 * UPDATE_INTERVAL_IN_MINUTES;
+    private static final int     UPDATE_INTERVAL_IN_SECONDS   = 60 * UPDATE_INTERVAL_IN_MINUTES;
     // Update frequency in milliseconds
     private static final long   UPDATE_INTERVAL               = 1000 * UPDATE_INTERVAL_IN_SECONDS;
     // The fastest update frequency, in seconds
