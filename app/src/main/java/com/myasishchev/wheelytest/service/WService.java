@@ -109,7 +109,7 @@ public class WService extends Service implements WLocationManager.ILocationListe
         if (webSocket != null && webSocket.isConnected()) webSocket.disconnect();
         locationManager.delLocationListener(this);
         locationManager.stopUpdateLocation();
-        networkManager.addNetworkListener(this);
+        networkManager.delNetworkListener(this);
     }
 
     @Override
